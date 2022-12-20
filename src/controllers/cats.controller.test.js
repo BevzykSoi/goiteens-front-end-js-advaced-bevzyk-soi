@@ -46,4 +46,26 @@ describe("Cats controller", () => {
     expect(res.status).toBeCalled();
     expect(res.status).toBeCalledWith(404);
   });
+
+  test("should return created cat", async () => {
+    const data = {
+      name: "John",
+      age: 5,
+    };
+
+    req.body = data;
+    const response = await catsController.create(req, res, next, data);
+    expect(response).toHaveProperty("name", data.name);
+    expect(response).toHaveProperty("age", data.age);
+    expect(res.status).toBeCalled();
+    expect(res.status).toBeCalledWith(201);
+  });
+
+  test("should delete the cat", async () => {
+    req.params.catId = "id-1";
+    const response = await catsController.delete(req, res, next);
+    expect(response).toBe("Cat deleted");
+    expect(res.status).toBeCalled();
+    expect(res.status).toBeCalledWith(200);
+  });
 });
