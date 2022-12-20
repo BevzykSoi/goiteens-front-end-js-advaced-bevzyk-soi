@@ -25,7 +25,7 @@ exports.findById = async (req, res, next) => {
       return res.status(404).send("Cat not found");
     }
 
-    return cat;
+    return res.status(200).json(cat);
   } catch (error) {
     next(error);
   }

@@ -9,6 +9,9 @@ const catSchema = new Schema({
     type: Number,
     min: 0,
   },
+},{
+  timestamps: true,
+  versionKey: false,
 });
 
 module.exports = model("cat", catSchema);
