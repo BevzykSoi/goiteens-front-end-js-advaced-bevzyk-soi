@@ -54,7 +54,7 @@ describe("Cats controller", () => {
     };
 
     req.body = data;
-    const response = await catsController.create(req, res, next, data);
+    const response = await catsController.create(req, res, next);
     expect(response).toHaveProperty("name", data.name);
     expect(response).toHaveProperty("age", data.age);
     expect(res.status).toBeCalled();
