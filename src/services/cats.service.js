@@ -1,6 +1,6 @@
 const Cat = require("../models/Cat");
 
-exports.create = async (name, age) =>
+exports.create = async (name, age) => 
   await Cat.create({
     name,
     age,

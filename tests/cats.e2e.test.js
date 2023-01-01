@@ -65,4 +65,20 @@ describe("Cats router", () => {
     expect(response.body).toHaveProperty("name");
     expect(response.body).toHaveProperty("age");
   });
+
+  test('DELETE /cats/:catId should delete cat by id', async () => {
+    const data = {
+      name: "John",
+      age: 5,
+    };
+
+    const createResponse = await request(app).post("/api/v1/cats").send(data);
+
+    const response = await request(app).delete(
+      `/api/v1/cats/${createResponse.body._id}`
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe("Cat deleted!");
+  });
 });

@@ -64,7 +64,7 @@ describe("Cats controller", () => {
   test("should delete the cat", async () => {
     req.params.catId = "id-1";
     const response = await catsController.delete(req, res, next);
-    expect(response).toBe("Cat deleted");
+    expect(response).toBe("Cat deleted!");
     expect(res.status).toBeCalled();
     expect(res.status).toBeCalledWith(200);
   });

@@ -35,12 +35,12 @@ exports.delete = async (req, res, next) => {
   try {
     const cat = await catsService.getById(req.params.catId);
     if (!cat) {
-      return res.status(404).send("Cat not found");
+      return res.status(404).send("Cat not found!");
     }
 
     await catsService.delete(req.params.catId);
 
-    return res.status(200).send("Cat deleted");
+    return res.status(200).send("Cat deleted!");
   } catch (error) {
     next(error);
   }

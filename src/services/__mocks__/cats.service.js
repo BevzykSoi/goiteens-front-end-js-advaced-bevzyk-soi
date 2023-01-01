@@ -9,7 +9,7 @@ exports.getById = jest.fn((id) => {
 
 exports.create = jest.fn((name, age) => {
   const cat = {
-    _id: catsData._id,
+    _id: catsData[0]._id,
     name,
     age,
   }
@@ -18,5 +18,5 @@ exports.create = jest.fn((name, age) => {
 
 exports.delete = jest.fn((id) => {
   const cat = catsData.find((catItem) => catItem._id === id);
-  return cat;
+  return cat && "Cat deleted!";
 });
