@@ -1,1 +1,0 @@
-exports.sayHello = () => "Hello, World!";
