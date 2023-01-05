@@ -1,5 +1,5 @@
 {
-  "name": "13-testing",
+  "name": "14-email-verification",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

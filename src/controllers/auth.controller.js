@@ -47,6 +47,7 @@ exports.register = async (req, res, next) => {
 
     if (existingUser) {
       res.status(400).send("Email already in use!");
+      return;
     }
 
     const verificationToken = chance
@@ -83,6 +84,7 @@ exports.verify = async (req, res, next) => {
 
     if (!user) {
       res.status(404).send("User not found!");
+      return;
     }
 
     const isTokenValid = await bcrypt.compare(
@@ -116,6 +118,7 @@ exports.resendVerification = async (req, res, next) => {
 
     if (!user) {
       res.status(404).send("User not found!");
+      return;
     }
 
     if (user.isVerified) {
