@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const apiRouter = require('./routes/api.router');
+require("./config/passport");
 
 const app = express();
 

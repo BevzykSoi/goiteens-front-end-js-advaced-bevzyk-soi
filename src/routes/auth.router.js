@@ -4,16 +4,15 @@ const {
   register,
   verify,
   resendVerification,
-  sendTestEmail,
-  deleteUser
+  deleteUser,
 } = require("../controllers/auth.controller");
+const { auth } = require("../middlewares");
 
 const router = express.Router();
 
 router.post("/register", register);
-router.post("/verify/:verificationToken", verify);
-router.post("/resend-verification", resendVerification);
-router.post("/send-test", sendTestEmail);
-router.delete("/:email", deleteUser);
+router.post("/verify/:verificationToken", auth, verify);
+router.post("/resend-verification", auth, resendVerification);
+router.delete("/:email", auth, deleteUser);
 
 module.exports = router;

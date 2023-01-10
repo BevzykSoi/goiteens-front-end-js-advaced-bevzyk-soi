@@ -1,75 +1,47 @@
-const Chance = require("chance");
-const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 
-const User = require("../models/User");
-const transport = require("../config/emailTransport");
-
-const chance = new Chance();
-
-exports.sendTestEmail = async (req, res, next) => {
-  try {
-    const testAccount = await nodemailer.createTestAccount();
-
-    const fakeTransport = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-
-    const emailInfo = await fakeTransport.sendMail({
-      from: `"Test account" <${testAccount.user}>`,
-      to: "test@example.com",
-      subject: "Testing email service",
-      text: "Hello, test user! Here is your verification code: 123456",
-      html: "<p>Hello, test user! Here is your verification code:</p><h1>123456</h1>",
-    });
-
-    const emailUrl = nodemailer.getTestMessageUrl(emailInfo);
-
-    res.status(200).json({ emailInfo, emailUrl });
-  } catch (error) {
-    next(error);
-  }
-};
+const usersService = require("../services/users.service");
+const verificationService = require("../services/verification.service");
 
 exports.register = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const existingUser = await User.findOne({
-      email,
-    });
+    const existingUser = await usersService.findOneByEmail(email);
 
     if (existingUser) {
       res.status(400).send("Email already in use!");
       return;
     }
 
-    const verificationToken = chance
-      .integer({ min: 100000, max: 999999 })
-      .toString();
+    const { verificationToken, hashedVerificationToken } =
+      await verificationService.generateToken();
 
-    const emailInfo = await transport.sendMail({
-      from: `"Verify email with token" <${process.env.MAIL_USER}>`,
-      to: email,
-      subject: "Email verification token",
-      text: `Here is your verification token: ${verificationToken}`,
-      html: `<p style="font-family: sans-serif; font-weight: 700; color: palevioletred">Here is your verification token:</p><h1>${verificationToken}</h1>`,
-    });
+    const emailInfo = await verificationService.sendVerificationEmail(
+      email,
+      verificationToken
+    );
 
-    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
-
-    const user = await User.create({
+    const user = await usersService.createUser({
       email,
       verificationToken: hashedVerificationToken,
     });
 
-    res.status(201).json({ user, emailInfo });
+    const authToken = jwt.sign(
+      {
+        _id: user._id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.status(201).json({
+      user,
+      emailInfo,
+      authToken,
+    });
   } catch (error) {
     next(error);
   }
@@ -78,16 +50,16 @@ exports.register = async (req, res, next) => {
 exports.verify = async (req, res, next) => {
   try {
     const { verificationToken } = req.params;
-    const { email } = req.body;
+    const { email } = req.user;
 
-    const user = await User.findOne({ email });
+    const user = await usersService.findOneByEmail(email);
 
     if (!user) {
       res.status(404).send("User not found!");
       return;
     }
 
-    const isTokenValid = await bcrypt.compare(
+    const isTokenValid = await verificationService.validateVerificationToken(
       verificationToken,
       user.verificationToken
     );
@@ -97,13 +69,10 @@ exports.verify = async (req, res, next) => {
       return;
     }
 
-    user.verificationToken = null;
-    user.isVerified = true;
-
-    await user.save();
+    const verifiedUser = await usersService.verifyEmail(user._id);
 
     res.status(200).json({
-      user,
+      verifiedUser,
     });
   } catch (error) {
     next(error);
@@ -112,9 +81,9 @@ exports.verify = async (req, res, next) => {
 
 exports.resendVerification = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email } = req.user;
 
-    const user = await User.findOne({ email });
+    const user = await usersService.findOneByEmail(email);
 
     if (!user) {
       res.status(404).send("User not found!");
@@ -122,30 +91,26 @@ exports.resendVerification = async (req, res, next) => {
     }
 
     if (user.isVerified) {
-        res.status(400).send("User is already verified!");
-        return;
+      res.status(400).send("User is already verified!");
+      return;
     }
 
-    const verificationToken = chance
-      .integer({ min: 100000, max: 999999 })
-      .toString();
+    const { verificationToken, hashedVerificationToken } =
+      await verificationService.generateToken();
 
-    const emailInfo = await transport.sendMail({
-      from: `"Verify email with token" <${process.env.MAIL_USER}>`,
-      to: email,
-      subject: "Email verification token",
-      text: `Here is your verification token: ${verificationToken}`,
-      html: `<p style="font-family: sans-serif; font-weight: 700; color: palevioletred">Here is your verification token:</p><h1>${verificationToken}</h1>`,
-    });
+    const emailInfo = await verificationService.sendVerificationEmail(
+      email,
+      verificationToken
+    );
 
-    const hashedVerificationToken = await bcrypt.hash(verificationToken, 10);
-
-    user.verificationToken = hashedVerificationToken;
-    await user.save();
+    const updatedUser = await usersService.updateVerificationToken(
+      user._id,
+      hashedVerificationToken
+    );
 
     res.status(200).json({
-        user,
-        emailInfo,
+      updatedUser,
+      emailInfo,
     });
   } catch (error) {
     next(error);
@@ -156,7 +121,18 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const { email } = req.params;
 
-    await User.findOneAndDelete({ email });
+    if (req.user.email !== email) {
+      res.status(401).send("Unauthorized!");
+      return;
+    }
+
+    const user = await usersService.findOneByEmail(email);
+    if (!user) {
+      res.status(404).send("Email not found!");
+      return;
+    }
+
+    await usersService.deleteUser(user._id);
 
     res.status(200).send("User deleted!");
   } catch (error) {

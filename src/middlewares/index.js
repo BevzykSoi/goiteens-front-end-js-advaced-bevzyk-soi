@@ -1,3 +1,5 @@
 module.exports = {
-  schemaValidate: require('./schemaValidate'),
+  schemaValidate: require("./schemaValidate"),
+  auth: require("./auth"),
+  isVerified: require("./isVerified"),
 };
