@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/olehhapuk/fe_js_advanced-nodejs.git"
+    "url": "git+https://github.com/BevzykSoi/goiteens-front-end-js-advaced-bevzyk-soi.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/olehhapuk/fe_js_advanced-nodejs/issues"
+    "url": "https://github.com/BevzykSoi/goiteens-front-end-js-advaced-bevzyk-soi/issues"
   },
-  "homepage": "https://github.com/olehhapuk/fe_js_advanced-nodejs#readme",
+  "homepage": "https://github.com/BevzykSoi/goiteens-front-end-js-advaced-bevzyk-soi#readme",
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^6.8.3",
