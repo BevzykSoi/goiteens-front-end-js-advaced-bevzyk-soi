@@ -1,15 +1,33 @@
-const express = require("express");
-const morgan = require("morgan");
+const { PrismaClient } = require("@prisma/client");
 
-const app = express();
+const prisma = new PrismaClient();
 
-app.use(morgan("dev"));
+async function main() {
+  await prisma.user.deleteMany(); 
 
-app.get("/", (req, res) => res.send("Hello, World!"));
+  const user1 = await prisma.user.create({
+    data: {
+      email: "user1@mail.com",
+      password: "12345"
+    }
+  });
 
-const templateMongoUrl = "mongodb://<username>:<password>@<service-name>:27017";
-const exampleMongoUrl = "mongodb://root:root@database:27017";
+  const post1 = await prisma.post.create({
+    data: {
+      text: "Mollit ad laboris consectetur labore proident esse eu.",
+      owner: {
+        connect: {
+          id: user1.id,
+        }
+      },
+    },
+    include: {
+      owner: true,
+    }
+  });
 
-app.listen(5000, () => {
-  console.log("Server started");
-});
+  console.log(user1);
+  console.log(post1);
+};
+
+main();
