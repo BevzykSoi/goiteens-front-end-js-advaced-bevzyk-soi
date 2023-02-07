@@ -1,1 +1,0 @@
-# goiteens-front-end-js-advaced-bevzyk-soi
