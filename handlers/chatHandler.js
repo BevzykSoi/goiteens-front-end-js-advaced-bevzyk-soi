@@ -18,10 +18,17 @@ module.exports = (io, socket) => {
                 });
             }
 
+            const users = await User.find();
+            const messages = await Message.find().populate("user");
+
             callback({
                 status: 200,
                 message: 'OK',
-                data: user,
+                data: {
+                    authUser: user,
+                    users,
+                    messages,
+                },
             });
         } catch (error) {
             callback({
@@ -32,17 +39,26 @@ module.exports = (io, socket) => {
         }
     };
 
-    async function onMessageCreate(text, userId) {
-        const message = await Message.create({
+    async function onMessageCreate(text, userId, cb) {
+        let message = await Message.create({
             text,
             user: userId,
         });
+        message = await message.populate('user');
 
-        io.emit("create new message", await message.populate({
-            path: "user",
-        }));
+        cb({
+            status: 200,
+            data: message,
+        });
+
+        socket.broadcast.emit("create new message", message);
+    }
+
+    async function onTypingMessage(username) {
+        socket.broadcast.emit('typing message', username);
     }
 
     socket.on("login", onLogin);
     socket.on("create new message", onMessageCreate);
+    socket.on("typing message", onTypingMessage);
 }
